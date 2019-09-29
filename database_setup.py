@@ -32,3 +32,28 @@ def connect_database(query):
         print(e.pgerror)
     else:
         pg.close()
+
+
+def pg_load_table(file_path, table_name):
+    '''
+    This function upload csv to a target table
+    '''
+    try:
+        conn = psycopg2.connect(dbname="MOVIES")
+        print("Connecting to Database")
+        cur = conn.cursor()
+        f = open(file_path, "r")
+        # Truncate the table first
+        cur.execute("Truncate {} Cascade;".format(table_name))
+        print("Truncated {}".format(table_name))
+        # Load table from the file with header
+        cur.copy_expert("COPY {} FROM STDIN DELIMITER ',' CSV HEADER".format(table_name))
+        # cur.execute("commit;")
+        conn.commit()
+        print("Loaded data into {}".format(table_name))
+        conn.close()
+        print("DB connection closed.")
+
+    except Exception as e:
+        print("Error: {}".format(str(e)))
+        sys.exit(1)
