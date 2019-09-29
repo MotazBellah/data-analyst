@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 import psycopg2
+import json
 import csv
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMI
+import sys
+from psycopg2.extras import RealDictCursor
+from itertools import islice
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
-def read_file():
+def read_file(file_path):
     '''Read CSV file and get the header'''
-    with open(r"Movie_Actors.csv", 'r') as f:
+    with open(file_path, 'r') as f:
         fString = f.read()
     header = fString.split('\n')[0].split(',')
     return header
@@ -16,44 +20,124 @@ def create_db():
     con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 
     cur = con.cursor()
-    cur.execute("CREATE DATABASE MOVIES")
+    cur.execute("CREATE DATABASE FIlMS")
+    con.commit()
+    print("Database has been created")
+    con.close()
 
 
 def connect_database(query):
     '''Connect to postgrelsql DB using psycopg2 DB-API '''
     try:
-        pg = psycopg2.connect(dbname="MOVIES")
-        c = pg.cursor()
-        c.execute(query)
-        pg.commit()
+        con = psycopg2.connect(dbname="films", user='vagrant')
+        cur = con.cursor()
+        cur.execute(query)
+        con.commit()
+        print("The query has been excuted")
     except psycopg2.Error as e:
         print("Unable to connect!")
         # print the error message
         print(e.pgerror)
     else:
-        pg.close()
+        con.close()
 
 
-def pg_load_table(file_path, table_name):
-    '''
-    This function upload csv to a target table
-    '''
-    try:
-        conn = psycopg2.connect(dbname="MOVIES")
-        print("Connecting to Database")
-        cur = conn.cursor()
-        f = open(file_path, "r")
-        # Truncate the table first
-        cur.execute("Truncate {} Cascade;".format(table_name))
-        print("Truncated {}".format(table_name))
-        # Load table from the file with header
-        cur.copy_expert("COPY {} FROM STDIN DELIMITER ',' CSV HEADER".format(table_name))
-        # cur.execute("commit;")
-        conn.commit()
-        print("Loaded data into {}".format(table_name))
-        conn.close()
-        print("DB connection closed.")
+def copy(file, table):
+    # connect_database('''\'COPY AIRPORT FROM 'Movie_Actors.csv' DELIMITER ';' CSV HEADER;''')
+    con = psycopg2.connect(dbname="films")
+    cur = con.cursor()
+    csv_file_name = file
+    sql = "COPY {} FROM STDIN DELIMITER ',' CSV HEADER".format(table)
+    cur.copy_expert(sql, open(csv_file_name, "r"))
+    con.commit()
+    print("The file has been copied to the table")
 
-    except Exception as e:
-        print("Error: {}".format(str(e)))
-        sys.exit(1)
+
+def create_writer_table(file):
+    '''Create a table '''
+
+    # Use read file function
+    header = read_file(file)
+    print(header)
+    # unpack the header into the table values
+    createTable = '''CREATE TABLE WRITER(
+                  {} integer, {} text, {} text,
+                  {} text); '''.format(*header)
+    # connect to the database and run the query
+    connect_database(createTable)
+    copy(file, "WRITER")
+
+
+def create_actor_table(file):
+    '''Create a table '''
+
+    # Use read file function
+    header = read_file(file)
+    print(header)
+    # unpack the header into the table values
+    createTable = '''CREATE TABLE ACTOR(
+                  {} text, {} text, {} text);
+                  '''.format(*header)
+    # connect to the database and run the query
+    connect_database(createTable)
+    copy(file, "ACTOR")
+
+
+def create_rating_table(file):
+    '''Create a table '''
+
+    # Use read file function
+    header = read_file(file)
+    print(header)
+    # unpack the header into the table values
+    createTable = '''CREATE TABLE RATING(
+                  {} integer, {} text, {} text,
+                  {} text); '''.format(*header)
+    # connect to the database and run the query
+    connect_database(createTable)
+    copy(file, "RATING")
+
+def create_genre_table(file):
+    '''Create a table '''
+
+    # Use read file function
+    header = read_file(file)
+    print(header)
+    # unpack the header into the table values
+    createTable = '''CREATE TABLE GENRE(
+                  {} integer, {} text, {} text); '''.format(*header)
+    # connect to the database and run the query
+    connect_database(createTable)
+    copy(file, "GENRE")
+
+def create_movie_table(file):
+    '''Create a table '''
+
+    # Use read file function
+    header = read_file(file)
+    print(header)
+    # unpack the header into the table values
+    createTable = '''CREATE TABLE MOVIE(
+                  {} text, {} text, {} text,
+                  {} text, {} text, {} text,
+                  {} text, {} text, {} text,
+                  {} text, {} text, {} text,
+                  {} text, {} text, {} text,
+                  {} text, {} text, {} text
+                  );'''.format(*header)
+    # connect to the database and run the query
+    connect_database(createTable)
+    copy(file, "MOVIE")
+
+def creat_all():
+    
+    create_db()
+    create_writer_table('datasets/Movie_Writer.csv')
+    create_actor_table('datasets/Movie_Actors.csv')
+    create_genre_table('datasets/Movie_Genres.csv')
+    create_rating_table('datasets/Movie_AdditionalRating.csv')
+    create_movie_table('datasets/Movie_Movies.csv')
+
+
+if __name__ == '__main__':
+    creat_all()
