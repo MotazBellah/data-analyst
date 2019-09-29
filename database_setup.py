@@ -9,3 +9,26 @@ def read_file():
         fString = f.read()
     header = fString.split('\n')[0].split(',')
     return header
+
+
+def create_db():
+    con = psycopg2.connect(dbname='postgres')
+    con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+
+    cur = con.cursor()
+    cur.execute("CREATE DATABASE MOVIES")
+
+
+def connect_database(query):
+    '''Connect to postgrelsql DB using psycopg2 DB-API '''
+    try:
+        pg = psycopg2.connect(dbname="MOVIES")
+        c = pg.cursor()
+        c.execute(query)
+        pg.commit()
+    except psycopg2.Error as e:
+        print("Unable to connect!")
+        # print the error message
+        print(e.pgerror)
+    else:
+        pg.close()
