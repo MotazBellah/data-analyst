@@ -17,3 +17,32 @@ def top_directors():
     else:
         f.write("There are no Directors!")
     f.close()
+
+def actor_movie():
+    f= open("actor_movie.txt","w+")
+    x = get_data('''select movie.Title, actor.Actors from movie
+                 join actor on movie.imdbID = actor.imdbID limit 100;''')
+
+    if x:
+        c = 1
+        for i in x:
+            f.write("{}. Actor {} performed  in the '{}' film. \n".format(c, i[1], i[0]))
+            c += 1
+    else:
+        f.write("There are no movies!")
+    f.close()
+
+def get():
+    f= open("team_movie.txt","w+")
+    x = get_data('''select writer.Person, movie.Director, actor.Actors, movie.Title
+                 from actor inner join writer on actor.imdbID = writer.imdbID
+                 inner join movie on movie.imdbID = actor.imdbID order by movie.Released limit 10;''')
+    for i in x:
+        f.write("The '{}' film: \n".format(i[3]))
+        f.write("\t {} as the Director \n".format(i[1]))
+        f.write("\t {} as the Actor \n".format(i[2]))
+        f.write("\t {} as the Writer \n\n".format(i[0]))
+
+    f.close()
+
+get()
