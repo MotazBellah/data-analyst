@@ -1,12 +1,19 @@
 import psycopg2
 from database_setup import get_data
 
-def display_data():
+def top_directors():
     # query = "select Title from movie where Director='Rose Cummings';"
-    x = get_data("select Director, count(*)  as num from movie where Director is not null and Type = 'movie' group by Director order by num DESC limit 10;")
-    return x
+    f= open("top_directors.txt","w+")
 
-# print(display_data())
-
-for i in display_data():
-    print(i[0].decode('ascii', 'ignore'), i[1])
+    x = get_data('''select Director, count(Title)  as num from movie where
+                 Director is not null and Type = 'movie' group by Director
+                 order by num DESC limit 10;''')
+    if x:
+        f.write("The top 10 Directors are the following: \n")
+        c = 1
+        for i in x:
+            f.write("{}. {} directed {} movies. \n".format(c, i[0], i[1]))
+            c += 1
+    else:
+        f.write("There are no Directors!")
+    f.close()
