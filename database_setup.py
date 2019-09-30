@@ -26,6 +26,24 @@ def create_db():
     con.close()
 
 
+def get_data(*qureies):
+    ''' This function used to connect to the database'''
+    try:
+        con = psycopg2.connect(dbname="films")
+    except psycopg2.Error as e:
+        print ("Unable to connect!")
+        print (e.pgerror)
+        print (e.diag.message_detail)
+        sys.exit(1)
+    else:
+        cur = con.cursor()
+        for qurey in qureies:
+            cur.execute(qurey)
+        d = cur.fetchall()
+        con.close()
+    return d
+
+
 def connect_database(query):
     '''Connect to postgrelsql DB using psycopg2 DB-API '''
     try:
@@ -130,7 +148,7 @@ def create_movie_table(file):
     copy(file, "MOVIE")
 
 def creat_all():
-    
+
     create_db()
     create_writer_table('datasets/Movie_Writer.csv')
     create_actor_table('datasets/Movie_Actors.csv')
