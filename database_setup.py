@@ -6,7 +6,7 @@ import sys
 from psycopg2.extras import RealDictCursor
 from itertools import islice
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
-
+# Read the file and return the header
 def read_file(file_path):
     '''Read CSV file and get the header'''
     with open(file_path, 'r') as f:
@@ -14,8 +14,9 @@ def read_file(file_path):
     header = fString.split('\n')[0].split(',')
     return header
 
-
+# Create DB
 def create_db():
+    '''Connect to postgres and create films DB '''
     con = psycopg2.connect(dbname='postgres')
     con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 
@@ -27,16 +28,16 @@ def create_db():
 
 
 def get_data(*qureies):
-    ''' This function used to connect to the database'''
+    '''connect to the database and run some qureies'''
     try:
         con = psycopg2.connect(dbname="films")
+        cur = con.cursor()
     except psycopg2.Error as e:
         print ("Unable to connect!")
         print (e.pgerror)
         print (e.diag.message_detail)
         sys.exit(1)
     else:
-        cur = con.cursor()
         for qurey in qureies:
             cur.execute(qurey)
         d = cur.fetchall()
@@ -55,82 +56,88 @@ def connect_database(query):
     except psycopg2.Error as e:
         print("Unable to connect!")
         # print the error message
-        print(e.pgerror)
+        print (e.pgerror)
+        print (e.diag.message_detail)
+        sys.exit(1)
     else:
         con.close()
 
 
 def copy(file, table):
-    # connect_database('''\'COPY AIRPORT FROM 'Movie_Actors.csv' DELIMITER ';' CSV HEADER;''')
-    con = psycopg2.connect(dbname="films")
-    cur = con.cursor()
-    csv_file_name = file
-    sql = "COPY {} FROM STDIN DELIMITER ',' CSV HEADER".format(table)
-    cur.copy_expert(sql, open(csv_file_name, "r"))
-    con.commit()
-    print("The file has been copied to the table")
+    '''Load the data from CSV to DB table'''
+    try:
+        con = psycopg2.connect(dbname="films")
+        cur = con.cursor()
+    except psycopg2.Error as e:
+        print ("Unable to connect!")
+        print (e.pgerror)
+        print (e.diag.message_detail)
+        sys.exit(1)
+    else:
+        # Copy the CSV file to DB table
+        csv_file_name = file
+        sql = "COPY {} FROM STDIN DELIMITER ',' CSV HEADER".format(table)
+        cur.copy_expert(sql, open(csv_file_name, "r"))
+        con.commit()
+        print("The file has been copied to the table")
 
 
 def create_writer_table(file):
-    '''Create a table '''
-
+    '''Create writer table '''
     # Use read file function
     header = read_file(file)
-    print(header)
     # unpack the header into the table values
     createTable = '''CREATE TABLE WRITER(
                   {} integer, {} text, {} text,
                   {} text); '''.format(*header)
-    # connect to the database and run the query
+    # connect to the database and create the table
     connect_database(createTable)
+    # copy the CSV file to the table
     copy(file, "WRITER")
 
 
 def create_actor_table(file):
-    '''Create a table '''
-
+    '''Create actor table '''
     # Use read file function
     header = read_file(file)
-    print(header)
     # unpack the header into the table values
     createTable = '''CREATE TABLE ACTOR(
                   {} text, {} text, {} text);
                   '''.format(*header)
     # connect to the database and run the query
     connect_database(createTable)
+    # copy the CSV file to the table
     copy(file, "ACTOR")
 
 
 def create_rating_table(file):
-    '''Create a table '''
-
+    '''Create rating table '''
     # Use read file function
     header = read_file(file)
-    print(header)
     # unpack the header into the table values
     createTable = '''CREATE TABLE RATING(
                   {} integer, {} text, {} text,
                   {} text); '''.format(*header)
     # connect to the database and run the query
     connect_database(createTable)
+    # copy the CSV file to the table
     copy(file, "RATING")
 
-def create_genre_table(file):
-    '''Create a table '''
 
+def create_genre_table(file):
+    '''Create genre table '''
     # Use read file function
     header = read_file(file)
-    print(header)
     # unpack the header into the table values
     createTable = '''CREATE TABLE GENRE(
                   {} integer, {} text, {} text); '''.format(*header)
     # connect to the database and run the query
     connect_database(createTable)
+    # copy the CSV file to the table
     copy(file, "GENRE")
 
 def create_movie_table(file):
-    '''Create a table '''
-
+    '''Create movie table '''
     # Use read file function
     header = read_file(file)
     print(header)
@@ -145,10 +152,11 @@ def create_movie_table(file):
                   );'''.format(*header)
     # connect to the database and run the query
     connect_database(createTable)
+    # copy the CSV file to the table
     copy(file, "MOVIE")
 
 def creat_all():
-
+    '''Call all the function and create DB'''
     create_db()
     create_writer_table('datasets/Movie_Writer.csv')
     create_actor_table('datasets/Movie_Actors.csv')
