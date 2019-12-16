@@ -18,10 +18,9 @@ def read_file(file_path):
 def create_db():
     '''Connect to postgres and create films DB '''
     con = psycopg2.connect(dbname='postgres')
-    con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 
     cur = con.cursor()
-    cur.execute("CREATE DATABASE FIlMS")
+    cur.execute("CREATE DATABASE movie")
     con.commit()
     print("Database has been created")
     con.close()
@@ -30,7 +29,7 @@ def create_db():
 def get_data(*qureies):
     '''connect to the database and run some qureies'''
     try:
-        con = psycopg2.connect(dbname="films")
+        con = psycopg2.connect(dbname="movie")
         cur = con.cursor()
     except psycopg2.Error as e:
         print ("Unable to connect!")
@@ -48,7 +47,7 @@ def get_data(*qureies):
 def connect_database(query):
     '''Connect to postgrelsql DB using psycopg2 DB-API '''
     try:
-        con = psycopg2.connect(dbname="films", user='vagrant')
+        con = psycopg2.connect(dbname="movie", user='vagrant')
         cur = con.cursor()
         cur.execute(query)
         con.commit()
@@ -66,7 +65,7 @@ def connect_database(query):
 def copy(file, table):
     '''Load the data from CSV to DB table'''
     try:
-        con = psycopg2.connect(dbname="films")
+        con = psycopg2.connect(dbname="movie")
         cur = con.cursor()
     except psycopg2.Error as e:
         print ("Unable to connect!")
@@ -140,7 +139,6 @@ def create_movie_table(file):
     '''Create movie table '''
     # Use read file function
     header = read_file(file)
-    print(header)
     # unpack the header into the table values
     createTable = '''CREATE TABLE MOVIE(
                   {} text, {} text, {} text,
